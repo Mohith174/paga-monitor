@@ -23,8 +23,8 @@ echo "Using Python: $($PYTHON --version) ($PYTHON)"
 
 # Check dependencies
 echo "Checking dependencies..."
-$PYTHON -c "import flask" 2>/dev/null || { echo "❌ Flask not installed. Run: pip install -r requirements.txt"; exit 1; }
-$PYTHON -c "import playwright" 2>/dev/null || { echo "❌ Playwright not installed. Run: pip install -r requirements.txt"; exit 1; }
+$PYTHON -c "import flask" 2>/dev/null || { echo "❌ Flask not installed. Run: pip install -r requirements-scraper.txt"; exit 1; }
+$PYTHON -c "import playwright" 2>/dev/null || { echo "❌ Playwright not installed. Run: pip install -r requirements-scraper.txt"; exit 1; }
 
 echo "✓ Dependencies OK"
 echo ""
