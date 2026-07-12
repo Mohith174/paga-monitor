@@ -56,18 +56,18 @@ def api_stats():
 def api_lead_detail(case_id):
     """Get single lead details"""
     with db.get_conn() as conn:
-        case = conn.execute("SELECT * FROM cases WHERE id = ?", (case_id,)).fetchone()
+        case = conn.execute("SELECT * FROM cases WHERE id = %s", (case_id,)).fetchone()
         if not case:
             return jsonify({'error': 'Not found'}), 404
         
         # Get notes
         notes = conn.execute("""
-            SELECT * FROM notes WHERE case_id = ? ORDER BY created_at DESC
+            SELECT * FROM notes WHERE case_id = %s ORDER BY created_at DESC
         """, (case_id,)).fetchall()
         
         # Get activity
         activity = conn.execute("""
-            SELECT * FROM activity_log WHERE case_id = ? ORDER BY timestamp DESC
+            SELECT * FROM activity_log WHERE case_id = %s ORDER BY timestamp DESC
         """, (case_id,)).fetchall()
         
         return jsonify({
@@ -92,7 +92,7 @@ def api_update_status(case_id):
     if status == 'contacted':
         with db.get_conn() as conn:
             conn.execute(
-                "UPDATE cases SET contacted_date = ? WHERE id = ?",
+                "UPDATE cases SET contacted_date = %s WHERE id = %s",
                 (datetime.now(), case_id)
             )
     

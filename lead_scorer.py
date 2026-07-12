@@ -123,7 +123,7 @@ def score_all_unscored(batch_size=100):
                        submission_date, num_employees, status
                 FROM cases
                 WHERE id NOT IN (SELECT case_id FROM case_analysis)
-                LIMIT ?
+                LIMIT %s
             """, (batch_size,)).fetchall()
 
         if not cases:
@@ -135,13 +135,16 @@ def score_all_unscored(batch_size=100):
             case_dict = dict(case)
             result = scorer.score_lead(case_dict)
 
-            # Store in analysis table
+            # Store in analysis table.
+            # NOTE: keys must match what Database.add_analysis() reads —
+            # class_size_estimate / summary (not estimated_class_size / analysis_notes),
+            # otherwise those values are silently dropped on insert.
             analysis_data = {
                 'agent_score': result['score'],
                 'priority': result['priority'],
                 'violations': result['violations'],
-                'estimated_class_size': case_dict.get('num_employees', 0),
-                'analysis_notes': ' | '.join(result['factors'])
+                'class_size_estimate': case_dict.get('num_employees', 0),
+                'summary': ' | '.join(result['factors'])
             }
             
             db.add_analysis(case_dict['id'], analysis_data)
