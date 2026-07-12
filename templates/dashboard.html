@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - PAGA Lead Gen{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h2><i class="bi bi-speedometer2"></i> Dashboard</h2>
+        <p class="text-muted">Real-time PAGA case monitoring - Updates every 5 minutes</p>
+    </div>
+</div>
+
+<!-- KPI Row 1 - New Cases -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="kpi-card">
+            <div class="kpi-label">New Today</div>
+            <div class="kpi-value">{{ stats.new_today }}</div>
+            <div class="kpi-change"><i class="bi bi-arrow-up"></i> Live data</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <div class="kpi-label">This Week</div>
+            <div class="kpi-value">{{ stats.new_week }}</div>
+            <div class="kpi-change">Last 7 days</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <div class="kpi-label">This Month</div>
+            <div class="kpi-value">{{ stats.new_month }}</div>
+            <div class="kpi-change">Last 30 days</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="kpi-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+            <div class="kpi-label">Avg Response</div>
+            <div class="kpi-value">{{ stats.avg_response_hours }}h</div>
+            <div class="kpi-change">Contact time</div>
+        </div>
+    </div>
+</div>
+
+<!-- KPI Row 2 - Lead Status -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted">Uncontacted</h6>
+                <h2 class="text-success">{{ stats.status_new }}</h2>
+                <a href="/leads?status=new" class="btn btn-sm btn-outline-success">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted">Contacted</h6>
+                <h2 class="text-primary">{{ stats.status_contacted }}</h2>
+                <a href="/leads?status=contacted" class="btn btn-sm btn-outline-primary">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted">Qualified</h6>
+                <h2 class="text-warning">{{ stats.status_qualified }}</h2>
+                <a href="/leads?status=qualified" class="btn btn-sm btn-outline-warning">View</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h6 class="text-muted">Closed</h6>
+                <h2 class="text-secondary">{{ stats.status_closed }}</h2>
+                <a href="/leads?status=closed" class="btn btn-sm btn-outline-secondary">View</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h5><i class="bi bi-graph-up"></i> Filing Trends (30 Days)</h5>
+            <canvas id="trendsChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h5><i class="bi bi-geo-alt"></i> Top Cities</h5>
+            <canvas id="citiesChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h5><i class="bi bi-pie-chart"></i> Industry Breakdown</h5>
+            <canvas id="industryChart"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="chart-container">
+            <h5><i class="bi bi-building"></i> Repeat Offenders</h5>
+            <canvas id="employersChart"></canvas>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Load and update charts
+let trendsChart, citiesChart, industryChart, employersChart;
+
+function loadCharts() {
+    fetch('/api/stats')
+        .then(r => r.json())
+        .then(data => {
+            updateTrendsChart(data.charts.trends);
+            updateCitiesChart(data.charts.cities);
+            updateIndustryChart(data.charts.industries);
+            updateEmployersChart(data.charts.employers);
+        });
+}
+
+function updateTrendsChart(data) {
+    const ctx = document.getElementById('trendsChart').getContext('2d');
+    if (trendsChart) trendsChart.destroy();
+    
+    trendsChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.map(d => d.date),
+            datasets: [{
+                label: 'Cases Filed',
+                data: data.map(d => d.count),
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function updateCitiesChart(data) {
+    const ctx = document.getElementById('citiesChart').getContext('2d');
+    if (citiesChart) citiesChart.destroy();
+    
+    citiesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(d => d.city),
+            datasets: [{
+                label: 'Cases',
+                data: data.map(d => d.count),
+                backgroundColor: '#f093fb'
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function updateIndustryChart(data) {
+    const ctx = document.getElementById('industryChart').getContext('2d');
+    if (industryChart) industryChart.destroy();
+    
+    industryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: data.map(d => d.industry),
+            datasets: [{
+                data: data.map(d => d.count),
+                backgroundColor: [
+                    '#667eea', '#f093fb', '#4facfe', '#43e97b', 
+                    '#f5576c', '#00f2fe', '#38f9d7', '#fa709a'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+}
+
+function updateEmployersChart(data) {
+    const ctx = document.getElementById('employersChart').getContext('2d');
+    if (employersChart) employersChart.destroy();
+    
+    employersChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(d => d.employer.substring(0, 30)),
+            datasets: [{
+                label: 'Cases',
+                data: data.map(d => d.count),
+                backgroundColor: '#43e97b'
+            }]
+        },
+        options: {
+            responsive: true,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+// Load charts on page load
+loadCharts();
+
+// Auto-refresh every 30 seconds
+setInterval(loadCharts, 30000);
+</script>
+{% endblock %}
