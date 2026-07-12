@@ -6,6 +6,18 @@ echo "=========================================="
 echo "PAGA Lead Gen - Starting..."
 echo "=========================================="
 
+# Load DATABASE_URL (and any other env vars) if present
+if [ -f ".env.local" ]; then
+    set -a
+    source .env.local
+    set +a
+fi
+
+if [ -z "$DATABASE_URL" ]; then
+    echo "❌ DATABASE_URL not set. Export it or add it to .env.local"
+    exit 1
+fi
+
 # Find the best Python executable
 if [ -f "./.venv/bin/python3" ]; then
     PYTHON="./.venv/bin/python3"
